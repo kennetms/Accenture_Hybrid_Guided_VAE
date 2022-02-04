@@ -1,0 +1,88 @@
+Nhid:
+- 12 #32
+- 30 #64
+#- 64
+#- 128
+Mhid: []
+alpha:
+- 0.97
+alpharp:
+- 0.65
+batch_size: 60
+beta:
+- 0.92
+betas:
+- 0.
+- 0.95
+inhib_layers:
+- 100
+- 100
+- 100
+cls_sq_layers:
+- 100
+- 100
+- 100
+return_meta: False # for dvsgesutres, return light and user data
+time_shuffle: False # Shuffle the data being presented in the time.
+resume_from: None #nmnist_model/checkpoints/ # resume from latest checkpoint of the specified model logfile. If you don't want to resume specify None
+device: cuda:1
+vae_beta: 1.2 # 1.2
+dimz: 100 #20 #32 #64
+num_classes: 10 # 3 if using right
+num_augs: 1 # number of times to augment the training samples to increase # of samples - 1, if 1 then use default data only
+class_weight: 1 # weight given to the losses of the classifiers, including both inhibitory losses
+is_guided: 1 # use guided vae method, 1 is True, 0 is False
+start_epoch: 0
+use_aug: 1 # use augmented data, 1 is True, 0 is false
+burnin_steps: 30 #100
+chunk_size_test: 100 #200
+chunk_size_train: 100 #200
+dataset: torchneuromorphic.nmnist.nmnist_dataloaders 
+deltat: 1000
+input_shape:
+- 2
+- 32
+- 32
+output_shape:
+- 2
+- 32
+- 32
+kernel_size:
+- 5
+lc_ampl: 0.5
+learning_rate: 
+- .0003 #0.003
+- .0003 #.0003
+- .0003 
+- .0003
+learning_method: 'bptt'
+loss: smoothL1
+loss_scope: 'bptt'
+lr_drop_factor: 1.01 #2
+lr_drop_interval: 1
+num_epochs: 100
+num_conv_layers: 2
+num_mlp_layers: 0
+num_layers: 2
+num_dl_workers: 8
+optimizer: adamax
+out_channels: 10
+online_update: False
+pool_size:
+- 2
+- 1
+- 2
+- 1
+- 1
+random_tau: false
+reg_l:
+- .0
+- .0
+- .0
+- .0
+stride:
+- 1
+- 1
+- 1
+- 1
+test_interval: 1 #10
