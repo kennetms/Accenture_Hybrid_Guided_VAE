@@ -15,20 +15,16 @@ The [Hybrid Guided VAE](https://arxiv.org/abs/2104.00165) is a method for . [Acc
 + [**Contacts**](#contacts)
 
 ## Process Overview
-
-​
 It is recommended to create a python3 virtual environment before executing further steps.
 This is how you do it:
-​
 
 ```bash
 $ python3 -m venv hgvae
 source hgvae/bin/activate
 ```
 
-​
 To install the required libraries used to help train and run Hybrid Guided VAE models, run the following:
-​
+
 ```bash
 $ pip install -r requirements.txt
 ```
@@ -38,9 +34,8 @@ Now you will need to get the data and follow instructions for training models in
 ## Getting Data
 
 **DVSGestures**
-​
 To install the DVSGestures dataset to train and run Hybrid Guided VAE models, run the following:
-​
+
 
 ```bash
 $ cd data
@@ -50,10 +45,9 @@ $ cd ..
 ```
 
 **N-MNIST** 
-​
 The torchenuromorphic library will automatically install the N-MNIST dataset if it is not on your local machine 
 when you try to train or run an N-MNIST model.
-​
+
 
 ## Training Models
 
@@ -81,17 +75,16 @@ To train a model with SLAYER-Loihi that is compatible with Loihi 1.0 run the .ip
 ```bash
 $ cd slayer_loihi_example
 ```
-​
 Loihi_Simulator_training.ipynb
-​
+
 
 Models typically take several hours to train, with intermediate results and models stored in the logs/ directory.
 
 ## Trained models
 Example models with their parameters can be found in the subfolders named
-​
+```bash
 example_model
-​
+```
 
 
 Checkpoints with saved models are placed in the logs directory.
@@ -105,20 +98,20 @@ $ tensorboard --logdir logs/train_lights/default/Mar23_20-57-42_ripper --port 60
 The files in the parameters/ directory can be changed to load a model from a saved checkpoint.
 
 For example, to resume a model from a checkpoint edit the line
-​
+```bash
 resume_from: None
-​
+```
 
 to the checkpoints folder of the model you want to resume from. 
 For example, if you wanted to use the provided DVSGestures model:
-​
+```bash
 resume_from: ../dvs_gestures/example_model/checkpoints/
-​
+```
 
 To train a model from scratch, change the line to:
-​
+```bash
 resume_from: None
-​
+```
 
 ## Licensing
 These assets are licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0.txt).
