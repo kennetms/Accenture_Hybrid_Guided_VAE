@@ -4,7 +4,7 @@
 
 # note to self: this still doesn't work as well performance wise as the old version so I think that there might be a bug and need to fix it.
 import sys
-sys.path.insert(1, '../model')
+sys.path.insert(1, '../utils')
 sys.path.insert(1, '../')
 from train_hybrid_vae_guided_base import Guide, HybridGuidedVAETrainer
 import matplotlib

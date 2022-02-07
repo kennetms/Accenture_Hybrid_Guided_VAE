@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '../model')
+sys.path.insert(1, '../utils')
 sys.path.insert(1, '../')
 from train_hybrid_vae_guided_base import Guide, HybridGuidedVAETrainer
 import matplotlib
