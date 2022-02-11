@@ -1,6 +1,6 @@
 # Accenture_Hybrid_Guided_VAE
 
-The [Hybrid Guided VAE](https://arxiv.org/abs/2104.00165) is a method for . [Accenture Labs](https://www.accenture.com/us-en/about/accenture-labs-index) created the Hybrid Guided VAE in collaboration with the [UCI NMI Lab](https://nmi-lab.org/). By open-sourcing the components that we used to enable training SNN models with our method, we hope to encourage adoption to other datasets and problem domains and collaboration for improvements to the methods.
+The [Hybrid Guided VAE](https://arxiv.org/abs/2104.00165) is a method for learning a disentangled feature representation of event-based data streams. [Accenture Labs](https://www.accenture.com/us-en/about/accenture-labs-index) created the Hybrid Guided VAE in collaboration with the [UCI NMI Lab](https://nmi-lab.org/). By open-sourcing the components that we used to enable training SNN models with our method, we hope to encourage adoption to other datasets and problem domains and collaboration for improvements to the methods.
 
 ## Table of Contents
 
