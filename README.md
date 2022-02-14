@@ -12,13 +12,13 @@ Then encoded features are guided with supervised learning to disentangle certain
 
 The features can then be decoded and visualized with a convolutional neural network decoder.
 
-![](orig_recon.png)
+![](orig_recon_crop.png)
 
  [Accenture Labs](https://www.accenture.com/us-en/about/accenture-labs-index) created the HG-VAE in collaboration with the [UCI NMI Lab](https://nmi-lab.org/).
 
  By open-sourcing the components that we used to enable training SNN models with our method, we hope to encourage adoption to other datasets, problem domains, and collaboration for improvements to the methods.
 
- For more details refer to this [paper](https://arxiv.org/abs/2104.00165)
+ For more details refer to this [paper](https://arxiv.org/abs/2104.00165).
 
  If you use this library for your own work please [cite it](#how-to-cite).
 
