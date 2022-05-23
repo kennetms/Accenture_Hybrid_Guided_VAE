@@ -404,25 +404,10 @@ class HybridGuidedVAETrainer():
         self.opt.step()
         #opt_excite.step()
 
-        # excitation net??? I'm pretty confused as to what this block is really doing.
-        # it's feeding in the inhibition z's to the inhibition net and going backwards on it with the loss
-        # and actual targets. 
-        self.opt.zero_grad()
-        #opt_inhib.zero_grad()
-        z = self.net.reparameterize(mu,logvar).detach()
-        inhib_z = self.inhib.inhibit_z(z).to(self.device)
         
-        excite_output = self.inhib(inhib_z)
+        excite_loss = 0 #loss
 
-        loss = self.inhib_criterion(excite_output, hot_ts.to(self.device))*self.params['class_weight'] # now MultiLabelSoftMarginLoss
-        excite_loss = loss
-        loss.backward()
-        self.opt.step()
-        #opt_inhib.step()
-
-        # excitation net??? no it's not, it's the inhibition again, this time it's being trained adversarially with itself I guess
-        # or something. I need to really go over this again I think. It seems to work, but I'm having trouble understanding
-        # exactly why or if there's stuff that could be changed to make it better.
+        # inhibition net, trained to not encode class relevant features
         self.opt.zero_grad()
         self.opt_excititory.zero_grad() #separate but same optimizer that is in the multiopt??? Doe this do anything???
         mu, logvar = self.net.encode(s)
@@ -440,7 +425,7 @@ class HybridGuidedVAETrainer():
         self.opt.step()
         self.opt_excititory.step() # need to check the impact doing this has, if any
 
-        return vae_loss.data, excite_loss.data, inhib_loss.data, clas_loss.data, soft_entropy, 0 #soft_mean=0
+        return vae_loss.data, 0, inhib_loss.data, clas_loss.data, soft_entropy, 0  #excite_loss.data, inhib_loss.data, clas_loss.data, soft_entropy, 0 #soft_mean=0
 
     
     def train(self):
@@ -504,7 +489,7 @@ class HybridGuidedVAETrainer():
                 frames = self.process_target(x_c,i-1)
                 loss_, excite_loss_, inhib_loss_, loss_abs_, soft_entropy, soft_mean = self.train_step_guided(x_c,frames.to(self.device),new_t.long(),self.params['vae_beta'])
                 loss_batch.append(loss_.detach().cpu().numpy())
-                excite_batch.append(excite_loss_.detach().cpu().numpy())
+                excite_batch.append(0)#excite_loss_.detach().cpu().numpy())
                 inhib_batch.append(inhib_loss_.detach().cpu().numpy())
                 abs_batch.append(loss_abs_.detach().cpu().numpy())
                 entropy_batch.append(soft_entropy)
