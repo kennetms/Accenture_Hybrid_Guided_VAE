@@ -6,7 +6,7 @@ import sys
 sys.path.insert(1, '../utils')
 import matplotlib
 matplotlib.use('Agg')
-from utils.hybrid_beta_vae import Reshape, VAE
+from hybrid_beta_vae import Reshape, VAE
 from decolle.utils import parse_args, train, test, accuracy, save_checkpoint, load_model_from_checkpoint, prepare_experiment, write_stats, cross_entropy_one_hot
 #from utils import save_checkpoint, load_model_from_checkpoint
 import datetime, os, socket, tqdm
@@ -22,7 +22,7 @@ from torchneuromorphic import transforms
 from tqdm import tqdm
 import math
 import sys
-from utils.utils import generate_process_target
+from utils import generate_process_target
 
 import pdb
 
@@ -267,7 +267,14 @@ class HybridGuidedVAETrainer():
             self.data_batch = self.data_batch[self.target_batch[:,-1,:].argmax(1)!=10]
 
         self.data_batch = torch.Tensor(self.data_batch).to(self.device)
-        self.target_batch = torch.Tensor(self.target_batch).to(self.device)
+        
+        self.target_batch = self.target_batch[self.target_batch[:,-1,:].argmax(1)!=10] 
+        
+        self.target_batch = self.target_batch[:,-1,:].argmax(1)#.float()
+        
+        #print(self.target_batch)
+        
+        #self.target_batch = torch.Tensor(self.target_batch)#.to(self.device)
 
 
     def loss_fn(self,recon_x, x, mu, logvar, vae_beta = 4.0):
@@ -383,8 +390,8 @@ class HybridGuidedVAETrainer():
         # Need to modify it so that it is indeed true that one neuron corresponds to one class
         # and that ideally I know which neuron corresponds to which class
         # I think I can do this by disabling gradients for the not learning neurons, like what I did with SOEL
-        # but I'm not positive how to do this in torch, need to think about this
-        # could also be a matter of not propogating forward as well
+        # Tim suggested using a mask at the end of the forward pass, then backwards it will
+        # multiply non-learning neurons by 0 so they won't learn. Mask is basically a one-hot encoding
         
         self.net.train()
         #excite.train()
@@ -395,8 +402,13 @@ class HybridGuidedVAETrainer():
         self.opt.zero_grad() 
         #opt_excite.zero_grad()
         hot_ts = self.batch_one_hot(t)
-        y, mu, logvar, clas = self.net(s)
+        y, mu, logvar, clas = self.net(s, t)
         loss = self.loss_fn(y, x, mu, logvar, vae_beta)
+        
+        
+        
+        #pdb.set_trace()
+        
         clas_loss = self.inhib_criterion(clas, hot_ts.to(self.device))*self.params['class_weight']
         vae_loss = loss
         loss += clas_loss
@@ -691,6 +703,10 @@ class HybridGuidedVAETrainer():
         trav_space = (abs(min_lat)+max_lat)
 
         fig, axs = plt.subplots(1,n_plots,figsize=(16,10))
+        
+        # make sure there isn't interference from other class features in evaluation
+        lat[:clas] = 0
+        lat[clas+1:num_classes] = 0
 
         for i in range(n_plots):
             lat[clas] = max_lat-(trav_space/n_plots)*i
@@ -884,7 +900,7 @@ class HybridGuidedVAETrainer():
 
 
                     # reconstruction
-                    recon_batch, mu, logvar, clas = self.net(self.data_batch.to(self.device))
+                    recon_batch, mu, logvar, clas = self.net(self.data_batch.to(self.device), self.target_batch.to(self.device))
                     recon_batch_c = recon_batch.detach().cpu()
                     figure = plt.figure()
                     img = recon_batch_c.view(*[[-1]+self.params['output_shape']])[:,0:1]
@@ -906,7 +922,7 @@ class HybridGuidedVAETrainer():
                     # tsne
                     lats, tgts, usrs, lights = self.get_latent_space(self.train_dl, iterations=1)
                     lats_test, tgts_test, usrs_test, lights_test = self.get_latent_space(self.test_dl, iterations=1)
-
+                    print(lats[0][:10])
                     train_acc = self.eval_accuracy(lats, tgts, True)
                     test_acc = self.eval_accuracy(lats_test, tgts_test, True)
                     if not self.args.no_save:
