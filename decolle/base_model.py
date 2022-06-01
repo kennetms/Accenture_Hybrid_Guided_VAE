@@ -8,7 +8,7 @@ import numpy as np
 from itertools import chain
 from collections import namedtuple, OrderedDict
 import warnings
-from decolle.utils import train, test, accuracy, load_model_from_checkpoint, save_checkpoint, write_stats, get_output_shape, state_detach
+from decolle.utils import train, test, accuracy, load_model_from_checkpoint, save_checkpoint, write_stats, get_output_shape, state_detach, fixed_quantizers
 
 dtype = torch.float32
 
@@ -100,7 +100,7 @@ class BaseLIFLayer(nn.Module):
     NeuronState = namedtuple('NeuronState', ['P', 'Q', 'R', 'S'])
     sg_function = smooth_step
 
-    def __init__(self, layer, alpha=.9, alpharp=.65, wrp=1.0, beta=.85, deltat=1000, do_detach=True):
+    def __init__(self, layer, alpha=.9, alpharp=.65, wrp=1.0, beta=.85, deltat=1000, do_detach=True, quantization=False, precision=None):
         '''
         deltat: timestep in microseconds (not milliseconds!)
         '''
@@ -116,6 +116,12 @@ class BaseLIFLayer(nn.Module):
         self.wrp = wrp
         self.state = None
         self.do_detach = do_detach
+        
+        if quantization:
+            print("LIF layer using quantizer with precision: %i" % precision)
+            self.quantizer = fixed_quantizers[precision]
+        else:
+            self.quantizer = None
 
     def cuda(self, device=None):
         '''
