@@ -1,7 +1,7 @@
 Nhid:
 - 32
 - 64
-- 64
+#- 64
 - 128
 Mhid: []
 inhib_layers:
@@ -16,17 +16,21 @@ alpha:
 - 0.99 
 alpharp:
 - 0.65
-batch_size: 20
+batch_size: 100
 beta:
 - 0.97
 betas:
 - 0.
 - 0.95
-resume_from: /home/kennetms/Documents/Accenture_Hybrid_Guided_VAE/dvs_gestures/logs/train_hybrid_vae_guided_base/default/May04_16-05-18_chouti/checkpoints
-device: cuda:1
+resume_from: /home/kennetms/Documents/Accenture_Hybrid_Guided_VAE/dvs_gestures/logs/train_hybrid_vae_guided_base/default/May31_15-13-32_chouti/checkpoints 
+#/home/kennetms/Documents/Accenture_Hybrid_Guided_VAE/logs/train_hybrid_vae_guided_base/default/May31_11-01-32_chouti/checkpoints
+#None 
+#/home/kennetms/Documents/Accenture_Hybrid_Guided_VAE/dvs_gestures/logs/train_hybrid_vae_guided_base/default/May19_13-21-53_chouti/checkpoints
+ #/home/kennetms/Documents/Accenture_Hybrid_Guided_VAE/dvs_gestures/logs/train_hybrid_vae_guided_base/default/May04_16-05-18_chouti/checkpoints
+device: cuda:0
 vae_beta: 1.2
-dimz: 100 #20 #32 #64
-num_classes: 10
+dimz: 10 #100
+num_classes: 2 #0
 is_guided: 1 
 start_epoch: 0
 use_aug: 1 # use augmented data, 1 is True, 0 is false
@@ -61,12 +65,12 @@ loss: smoothL1
 lr_drop_factor: 1.5
 lr_drop_interval: 60
 num_epochs: 600
-num_conv_layers: 4
+num_conv_layers: 3
 num_mlp_layers: 0
-num_layers: 4
-num_dl_workers: 4
+num_layers: 3
+num_dl_workers: 12
 optimizer: adamax
-out_channels: 10
+out_channels: 10 #2 #10
 online_update: False
 pool_size:
 - 2
