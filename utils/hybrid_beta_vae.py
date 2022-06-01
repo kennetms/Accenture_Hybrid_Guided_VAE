@@ -118,7 +118,7 @@ class CLS_SQ(nn.Module):
             self.cls_sq[f'norm{i}'] = nn.BatchNorm1d(size)
             self.cls_sq[f'relu{i}'] = nn.LeakyReLU(negative_slope=0.2,inplace=True)
 
-        self.cls_sq[f'lin{i+1}'] = nn.Linear(encoder_params['cls_sq_layers'][-1],encoder_params['num_classes'])
+        self.cls_sq[f'lin{i+1}'] = nn.Linear(encoder_params['cls_sq_layers'][-1],encoder_params['out_channels'])
             #('lin4', nn.Linear(layer_size3, encoder_params['num_classes']))
 
         self.cls_sq = nn.Sequential(self.cls_sq)
@@ -208,6 +208,8 @@ class VAE(nn.Module):
     def init_parameters(self, seq_len, input_shape):
         self.encoder_head['logvar'].weight.data[:] *= 1e-16
         self.encoder_head['logvar'].bias.data[:] *= 1e-16 
+        # self.encoder_head['mu'].weight.data[:] *= 1e-16
+        # self.encoder_head['mu'].bias.data[:] *= 1e-16 
         return 
     
     def encoder_forward(self, x):
@@ -219,7 +221,7 @@ class VAE(nn.Module):
         return self.encoder_head['mu'](h1), self.encoder_head['logvar'](h1)
 
     def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar) 
+        std = torch.exp(0.5*logvar)# - 1
         eps = torch.randn_like(std)
         return mu + eps*std
 
@@ -241,6 +243,7 @@ class VAE(nn.Module):
         
         # put a mask on the clas to gate the learning of the neurons
         # that way there is true disentanglement and specialization
+        
         mask = torch.zeros(excite_z.shape)
         for i in range(len(t)):
             mask[i][t[i]] = 1
@@ -252,6 +255,8 @@ class VAE(nn.Module):
         
         for i in range(z.shape[0]): 
             z[i][:self.num_classes] = excite_z[i]
+            z[i][self.num_classes:] = 0 #excite_z[i]
+        #print(z)
         
         clas = self.cls_sq(excite_z)
         

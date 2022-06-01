@@ -6,7 +6,7 @@ import sys
 sys.path.insert(1, '../utils')
 import matplotlib
 matplotlib.use('Agg')
-from hybrid_beta_vae import Reshape, VAE
+from utils.hybrid_beta_vae import Reshape, VAE
 from decolle.utils import parse_args, train, test, accuracy, save_checkpoint, load_model_from_checkpoint, prepare_experiment, write_stats, cross_entropy_one_hot
 #from utils import save_checkpoint, load_model_from_checkpoint
 import datetime, os, socket, tqdm
@@ -22,7 +22,7 @@ from torchneuromorphic import transforms
 from tqdm import tqdm
 import math
 import sys
-from utils import generate_process_target
+from utils.utils import generate_process_target
 
 import pdb
 
@@ -38,7 +38,7 @@ class Guide(nn.Module):
         and these are trained jointly with the VAE encoder.
         Inspired by the work in https://arxiv.org/abs/2004.01255
     """
-    def __init__(self, dimz, num_classes, excite, hidden_layers):
+    def __init__(self, dimz, num_classes, excite, hidden_layers, output_size):
         """
             inputs:
                 - int dimz: The dimension of the latent space
@@ -54,7 +54,7 @@ class Guide(nn.Module):
         else:
             input_size = dimz-num_classes
             
-        output_size = num_classes
+        output_size = output_size #num_classes
 
         self.num_classes = num_classes
 
@@ -168,7 +168,8 @@ class HybridGuidedVAETrainer():
         self.net = VAE(input_shape=self.params['input_shape'], ngf=ngf, out_features=out_features, seq_len=self.params['chunk_size_train'], dimz=self.params['dimz'], encoder_params=self.params).to(self.device)
         
         from decolle.init_functions import init_LSUV
-        init_LSUV(self.net.encoder,self.data_batch.to(self.device))
+        if self.args.resume_from == 'None':
+            init_LSUV(self.net.encoder,self.data_batch.to(self.device))
 
         if self.params['is_guided']: 
             from collections import OrderedDict
@@ -183,9 +184,9 @@ class HybridGuidedVAETrainer():
                 inhib_layers[f'norm{i}'] = nn.BatchNorm1d(size)
                 inhib_layers[f'relu{i}'] = nn.LeakyReLU(negative_slope=0.2,inplace=True)
                 
-            inhib_layers[f'lin{i+1}'] = nn.Linear(self.params['inhib_layers'][-1],self.params['num_classes'])
+            inhib_layers[f'lin{i+1}'] = nn.Linear(self.params['inhib_layers'][-1],self.params['out_channels'])
 
-            self.inhib = Guide(self.params['dimz'],self.params['num_classes'],False,inhib_layers).to(self.device)
+            self.inhib = Guide(self.params['dimz'],self.params['num_classes'],False,inhib_layers,self.params['out_channels']).to(self.device)
 
             # The loss for the guided part of the VAE
             self.inhib_criterion = nn.MultiLabelSoftMarginLoss(reduction='sum') #nn.CrossEntropyLoss() #nn.NLLLoss()
@@ -231,6 +232,8 @@ class HybridGuidedVAETrainer():
         # --------TRAINING LOOP----------
         self.num_classes = self.params['num_classes']
         
+        self.out_channels = self.params['out_channels']
+        
 
         
     def generate_data_batch(self, dataset, dataset_path, ds):
@@ -264,11 +267,18 @@ class HybridGuidedVAETrainer():
         self.data_batch, self.target_batch, self.light_batch, self.user_batch = next(iter(self.train_dl))
 
         if not self.use_other:
-            self.data_batch = self.data_batch[self.target_batch[:,-1,:].argmax(1)!=10]
+            #pdb.set_trace()
+            #self.data_batch = self.data_batch[self.target_batch[:,-1,:].argmax(1)==0]
+            data_batch_0 = self.data_batch[self.target_batch[:,-1,:].argmax(1)==0]
+            data_batch_1 = self.data_batch[self.target_batch[:,-1,:].argmax(1)==1]
+            
+            self.data_batch = torch.cat((data_batch_0, data_batch_1))
 
         self.data_batch = torch.Tensor(self.data_batch).to(self.device)
         
-        self.target_batch = self.target_batch[self.target_batch[:,-1,:].argmax(1)!=10] 
+        #self.target_batch = self.target_batch[self.target_batch[:,-1,:].argmax(1)==0] 
+        
+        self.target_batch = torch.cat((self.target_batch[self.target_batch[:,-1,:].argmax(1)==0],self.target_batch[self.target_batch[:,-1,:].argmax(1)==1]))
         
         self.target_batch = self.target_batch[:,-1,:].argmax(1)#.float()
         
@@ -362,7 +372,7 @@ class HybridGuidedVAETrainer():
         """
             converts target vector into a one hot vector
         """
-        one_hot = torch.zeros((targets.shape[0],self.num_classes))
+        one_hot = torch.zeros((targets.shape[0],self.out_channels))
 
         for i in range(targets.shape[0]):
             one_hot[i][targets[i]] = 1
@@ -405,8 +415,6 @@ class HybridGuidedVAETrainer():
         y, mu, logvar, clas = self.net(s, t)
         loss = self.loss_fn(y, x, mu, logvar, vae_beta)
         
-        
-        
         #pdb.set_trace()
         
         clas_loss = self.inhib_criterion(clas, hot_ts.to(self.device))*self.params['class_weight']
@@ -424,6 +432,9 @@ class HybridGuidedVAETrainer():
         self.opt_excititory.zero_grad() #separate but same optimizer that is in the multiopt??? Doe this do anything???
         mu, logvar = self.net.encode(s)
         z = self.net.reparameterize(mu,logvar)
+        
+        #pdb.set_trace()
+        
         inhib_z = self.inhib.inhibit_z(z)
         #print(inhib_z.shape)
         inhib_output = self.inhib.model(inhib_z.to(self.device))
@@ -431,6 +442,9 @@ class HybridGuidedVAETrainer():
 
         # inhib net. adversarial train to encode for irrelevant features to classes
         inhib_hot_ts = torch.empty_like(hot_ts).fill_(0.5)
+        
+        #pdb.set_trace()
+        
         loss = self.inhib_criterion(inhib_output, inhib_hot_ts.to(self.device))*self.params['class_weight'] # now MultiLabelSoftMarginLoss
         inhib_loss = loss
         loss.backward()
@@ -484,7 +498,10 @@ class HybridGuidedVAETrainer():
         for i in range(self.params['num_augs']):
             for x,t,l,u in tqdm(iter(self.train_dl)):
                 if not self.use_other:
-                    new_t = t[t[:,-1,:].argmax(1)!=10]
+                    # new_t = t[t[:,-1,:].argmax(1)!=10]
+                    new_t_0 = t[t[:,-1,:].argmax(1)==0]
+                    new_t_1 = t[t[:,-1,:].argmax(1)==1]
+                    new_t = torch.cat((new_t_0, new_t_1))
                 else:
                     new_t = t
                 new_t = new_t[:,-1,:].argmax(1)
@@ -496,7 +513,9 @@ class HybridGuidedVAETrainer():
                     continue
                 
                 if not self.use_other:
-                    x = x[t[:,-1,:].argmax(1)!=10]
+                    x_0 = x[t[:,-1,:].argmax(1)==0]
+                    x_1 = x[t[:,-1,:].argmax(1)==1]
+                    x = torch.cat((x_0,x_1)) #x[t[:,-1,:].argmax(1)==0]
                 x_c = x.to(self.device)
                 frames = self.process_target(x_c,i-1)
                 loss_, excite_loss_, inhib_loss_, loss_abs_, soft_entropy, soft_mean = self.train_step_guided(x_c,frames.to(self.device),new_t.long(),self.params['vae_beta'])
@@ -535,7 +554,10 @@ class HybridGuidedVAETrainer():
         for i in range(iterations):
             for x,t,l,u in tqdm(iter(dl)):#,l,u in tqdm(iter(dl)): 
                 if not self.use_other:
-                    new_t = t[t[:,-1,:].argmax(1)!=10]
+                    #new_t = t[t[:,-1,:].argmax(1)==0]
+                    new_t_0 = t[t[:,-1,:].argmax(1)==0]
+                    new_t_1 = t[t[:,-1,:].argmax(1)==1]
+                    new_t = torch.cat((new_t_0, new_t_1))
                 else:
                     new_t = t
                     
@@ -547,7 +569,10 @@ class HybridGuidedVAETrainer():
                     continue
                 
                 if not self.use_other:
-                    x = x[t[:,-1,:].argmax(1)!=10]
+                    #x = x[t[:,-1,:].argmax(1)==0]
+                    x_0 = x[t[:,-1,:].argmax(1)==0]
+                    x_1 = x[t[:,-1,:].argmax(1)==1]
+                    x = torch.cat((x_0,x_1))
                     l = np.zeros(x.shape) #np.asarray(l)[t[:,-1,:].argmax(1)!=10]
                     u = np.zeros(x.shape)#np.asarray(u)[t[:,-1,:].argmax(1)!=10]
                 with torch.no_grad():
@@ -689,7 +714,7 @@ class HybridGuidedVAETrainer():
         # then traverse along one of them and see if it transitions to the attribute
         # that is desired
 
-        lat = lats[tgts==clas][0] # baseline latent example of class we will traverse along
+        lat = torch.zeros(lats.shape[1])#lats[tgts==clas][0] # baseline latent example of class we will traverse along
 
         # get min values of relevant latent dimensions
 
@@ -697,8 +722,8 @@ class HybridGuidedVAETrainer():
         #    lat[i] = min(lats.T[i])
 
         #get min and max values of latent dimension 1
-        min_lat = min(lats.T[clas])
-        max_lat = max(lats.T[clas])
+        min_lat = -3 #min(lats.T[clas])
+        max_lat = 3 #max(lats.T[clas])
 
         trav_space = (abs(min_lat)+max_lat)
 
@@ -742,15 +767,15 @@ class HybridGuidedVAETrainer():
         """
         
         
-        min_lat1 = min(lats.T[clas1])
-        max_lat1 = max(lats.T[clas1])
+        min_lat1 = -3 #min(lats.T[clas1])
+        max_lat1 = 3 #max(lats.T[clas1])
 
-        min_lat2 = min(lats.T[clas2])
-        max_lat2 = max(lats.T[clas2])
+        min_lat2 = -3 #min(lats.T[clas2])
+        max_lat2 = 3 #max(lats.T[clas2])
 
         num_classes = self.params['num_classes']
 
-        lat = lats[tgts==clas1][0]
+        lat = lat = torch.zeros(lats.shape[1]) #lats[tgts==clas1][0]
 
         #for i in range(num_classes):
         #    lat[i] = min(lats.T[i])
@@ -801,7 +826,9 @@ class HybridGuidedVAETrainer():
 
         num_classes = self.params['num_classes']
 
-        lat = lats[tgts==clas1][0]
+        lat = torch.zeros(lats.shape[1]) #lat = lats[tgts==clas1][0]
+        
+        #pdb.set_trace()
 
         # minimize all latent dimension variables
         for i in range(self.params['dimz']):
@@ -840,6 +867,13 @@ class HybridGuidedVAETrainer():
             saves checkpoints to view in tensorboard and for loading models later for additional training or inference
         """
         
+        #lats, tgts, usrs, lights = self.get_latent_space(self.train_dl, iterations=1)
+        null_batch = torch.zeros(self.data_batch.shape)
+        mu, logvar = self.net.encode(self.data_batch)#.to(self.device))
+        lat = self.net.reparameterize(mu,logvar).detach().cpu().numpy()
+        print("LATS BEFORE TRAINING", lat[0][:10])
+        pdb.set_trace()
+        
         if not self.args.no_train:
             orig = self.process_target(self.data_batch).detach().cpu().view(*[[-1]+self.params['output_shape']])[:,0:1]
             figure2 = plt.figure(99)
@@ -868,16 +902,16 @@ class HybridGuidedVAETrainer():
 
                     # tsne
                     lats, tgts, usrs, lights = self.get_latent_space(self.train_dl, iterations=1)
-                    lats_test, tgts_test, usrs_test, lights_test = self.get_latent_space(self.test_dl, iterations=3)
+                    lats_test, tgts_test, usrs_test, lights_test = self.get_latent_space(self.test_dl, iterations=1)
 
                     #latent space traversal
-                    fig = self.latent_traversal(lats, tgts, 1)
+                    fig = self.latent_traversal(lats, tgts, 0)
 
-                    fig_test = self.latent_traversal(lats_test, tgts_test, 1)
+                    fig_test = self.latent_traversal(lats_test, tgts_test, 0)
 
-                    fig_switch = self.latent_traversal_switch(lats, tgts, 1, 2)
+                    fig_switch = self.latent_traversal_switch(lats, tgts, 0, 1)
 
-                    fig_inhib = self.latent_traversal_inhib(lats, tgts, 1)
+                    fig_inhib = self.latent_traversal_inhib(lats, tgts, 0)
 
                     _, figure, fig2, fig3, fig6, fig8 = self.tsne_project(lats, tgts, usrs, lights, use_user=False, use_light=False)
                     _, figure2, fig4, fig5, fig7, fig9 = self.tsne_project(lats_test, tgts_test, usrs_test, lights_test, use_user=False, use_light=False)
