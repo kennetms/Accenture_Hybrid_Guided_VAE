@@ -6,7 +6,7 @@ import sys
 sys.path.insert(1, '../utils')
 import matplotlib
 matplotlib.use('Agg')
-from utils.hybrid_beta_vae import Reshape, VAE
+from hybrid_beta_vae import Reshape, VAE
 from decolle.utils import parse_args, train, test, accuracy, save_checkpoint, load_model_from_checkpoint, prepare_experiment, write_stats, cross_entropy_one_hot
 #from utils import save_checkpoint, load_model_from_checkpoint
 import datetime, os, socket, tqdm
@@ -22,7 +22,7 @@ from torchneuromorphic import transforms
 from tqdm import tqdm
 import math
 import sys
-from utils.utils import generate_process_target
+from utils import generate_process_target
 
 import pdb
 
