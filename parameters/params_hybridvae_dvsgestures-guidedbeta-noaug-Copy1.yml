@@ -1,7 +1,7 @@
 Nhid:
 - 32
 - 64
-- 64
+#- 64
 - 128
 Mhid: []
 inhib_layers:
@@ -13,12 +13,12 @@ cls_sq_layers:
 - 100
 - 100
 alpha:
-- 0.97 
+- 0.99 
 alpharp:
 - 0.65
-batch_size: 20
+batch_size: 30
 beta:
-- 0.92
+- 0.97
 betas:
 - 0.
 - 0.95
@@ -60,11 +60,11 @@ learning_method: 'bptt'
 loss: smoothL1
 lr_drop_factor: 1.5
 lr_drop_interval: 60
-num_epochs: 500
-num_conv_layers: 4
+num_epochs: 200
+num_conv_layers: 3
 num_mlp_layers: 0
-num_layers: 4
-num_dl_workers: 4
+num_layers: 3
+num_dl_workers: 12
 optimizer: adamax
 out_channels: 10
 online_update: False

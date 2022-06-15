@@ -14,7 +14,7 @@ from decolle.utils import parse_args, train, test, accuracy, save_checkpoint, lo
 import datetime, os, socket, tqdm
 import numpy as np
 import torch
-from torch import nn
+from torch import nn 
 import importlib
 from itertools import chain
 import matplotlib.pyplot as plt
@@ -37,13 +37,17 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser('HGVAE')
     
-    parser.add_argument('--params-file', default = '../parameters/params_hybridvae_dvsgestures-guidedbeta-noaug-Copy1.yml', type=str, help='Path to the parameter config file.') 
+    parser.add_argument('--params-file', default = 'an_example_model/params.yml', type=str, help='Path to the parameter config file.') 
     parser.add_argument('--data-file', default = '/home/kennetms/Documents/data/dvs_gestures.hdf5', type=str, help='Path to the file the data is in, should be hdf5 compatible with torchneuromorphic.')
+    parser.add_argument('--ds', default = 4, type=int, help='input downsample factor.')
     args = parser.parse_args()
     
     param_file = args.params_file #'parameters/params_hybridvae_dvsgestures-guidedbeta-noaug-Copy1.yml'
     dataset_path = args.data_file #'/home/kennetms/Documents/data/dvs_gestures.hdf5'
+    ds = args.ds
+     
+    HGVAE = HybridGuidedVAETrainer(param_file, dataset_path, use_other=False,ds=ds)
     
-    HGVAE = HybridGuidedVAETrainer(param_file, dataset_path)
+    print(HGVAE.net)
     
     HGVAE.train_eval_plot_loop()

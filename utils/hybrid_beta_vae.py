@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------------- 
 from decolle.base_model import *
 from decolle.lenet_decolle_model import LenetDECOLLE
-
+ 
 from collections import OrderedDict
 
 import pdb
@@ -235,7 +235,7 @@ class VAE(nn.Module):
         
         return exc_z
 
-    def forward(self, x, t):
+    def forward(self, x):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         
