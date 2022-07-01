@@ -157,13 +157,22 @@ If you'd like to contribute your work to the repository you can do so by opening
 If you use or adopt the models, code, or methods presented here please cite our work as follows:
 
 ```
-@misc{stewart2021gesture,
-      author={Kenneth Stewart and Andreea Danielescu and Lazar Supic and Timothy Shea and Emre Neftci},
-      title={Gesture Similarity Analysis on Event Data Using a Hybrid Guided Variational Auto Encoder},
-      year={2021},
-      eprint={2104.00165},
-      archivePrefix={arXiv},
-      primaryClass={cs.NE}
+@inproceedings{10.1145/3517343.3517372,
+author = {Stewart, Kenneth and Danielescu, Andreea and Shea, Timothy and Neftci, Emre},
+title = {Encoding Event-Based Data With a Hybrid SNN Guided Variational Auto-Encoder in Neuromorphic Hardware},
+year = {2022},
+isbn = {9781450395595},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3517343.3517372},
+doi = {10.1145/3517343.3517372},
+abstract = {Neuromorphic hardware equipped with learning capabilities can adapt to new, real-time data. While models of Spiking Neural Networks (SNNs) can now be trained using gradient descent to reach an accuracy comparable to equivalent conventional neural networks, such learning often relies on external labels. However, real-world data is unlabeled which can make supervised methods inapplicable. To solve this problem, we propose a Hybrid Guided Variational Autoencoder (VAE) which encodes event-based data sensed by a Dynamic Vision Sensor (DVS) into a latent space representation using an SNN. These representations can be used as an embedding to measure data similarity and predict labels in real-world data. We show that the Hybrid Guided-VAE achieves 87% classification accuracy on the DVSGesture dataset and it can encode the sparse, noisy inputs into an interpretable latent space representation, visualized through T-SNE plots. We also implement the encoder component of the model on neuromorphic hardware and discuss the potential for our algorithm to enable real-time learning from real-world event data.},
+booktitle = {Neuro-Inspired Computational Elements Conference},
+pages = {88–97},
+numpages = {10},
+keywords = {event-based sensing, spiking neural networks, neuromorphic computing, generative models},
+location = {Virtual Event, USA},
+series = {NICE 2022}
 }
 ```
 
